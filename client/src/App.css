@@ -1,0 +1,8 @@
+.App {
+  text-align: center;
+  height: 100%;
+}
+
+#svg-graph {
+  padding-top: calc((100vh - 720px) / 2);
+}
