@@ -12,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import HistoryIcon from '@mui/icons-material/History';
 import Grid from '@mui/material/Grid';
-import { extractText, delay } from "../utils";
+import { extractText, delay, clearDelays } from "../utils";
 import { UTTERANCES } from "../constants";
 
 function Graph({
@@ -20,8 +20,8 @@ function Graph({
   showHistory = false,
   setShowHistory = () => { }
 }) {
-  const MAX_HISTORY_LENGTH = 5;
-  const DB_STATE = "<bos_db>[db_1]<eos_db>";
+  const MAX_HISTORY_LENGTH = 10;
+  const DB_STATE = "<bos_db>[db_null]<eos_db>";
 
   const [inputValue, setInputValue] = useState("");
   const [beliefState, setBeliefState] = useState("Belief state");
@@ -39,12 +39,8 @@ function Graph({
 
   function handleInputKeyDown(event) {
     if (event.keyCode === 13 && !event.shiftKey) {
-      setGenerating(true);
       event.preventDefault();
-      setInputValue("");
-      // setBeliefState("<sos_belief> [restaurant] [food] french <eos_belief>");
-      // setDbState("<bos_belief>hi, there<eos_belief>");
-      // setResponse("<bos_belief>hi, there<eos_belief>");
+      setGenerating(true);
     }
   }
 
@@ -65,6 +61,8 @@ function Graph({
             max_history: MAX_HISTORY_LENGTH
           }),
         };
+
+        if(!animation) setInputValue("");
 
         try {
           const response = await fetch(`http://${window.location.hostname}:5000/generate_answer`, requestOptions);
@@ -93,27 +91,30 @@ function Graph({
 
   async function askQuestion() {
     let currentUtterance = UTTERANCES[counter.current % UTTERANCES.length];
-    if (currentUtterance === null) {
+
+    setInputValue(currentUtterance);
+    await delay(3000);
+    setGenerating(true);
+
+    if (currentUtterance.toLowerCase().includes("thank you")) {
       setShowHistory(true);
-      await delay(5000);
+      await delay(10000);
       setShowHistory(false);
+      await delay(2000);
       context.current = [];
     } else {
-      setInputValue(currentUtterance);
-      await delay(3000);
-      setGenerating(true);
+      await delay(10000);
     }
 
     counter.current += 1;
+    askQuestion();
   }
 
   useEffect(() => {
     if (animation) {
       askQuestion();
-      setQuestionInterval(setInterval(askQuestion, 10000));
     } else {
-      clearInterval(questionInterval);
-      setQuestionInterval(null);
+      clearDelays();
     }
   }, [animation])
 
@@ -350,9 +351,9 @@ function Graph({
               />
               <rect
                 x={0}
-                y={30}
+                y={20}
                 width={140}
-                height={60}
+                height={70}
                 rx={9}
                 ry={9}
                 fill="#fafafa"
@@ -361,9 +362,9 @@ function Graph({
               />
               <rect
                 x={220}
-                y={30}
+                y={20}
                 width={210}
-                height={60}
+                height={70}
                 rx={9}
                 ry={9}
                 fill="#fafafa"
@@ -1749,7 +1750,7 @@ function Graph({
                       justifyContent: "unsafe center",
                       width: 208,
                       height: 1,
-                      paddingTop: 60,
+                      paddingTop: 55,
                       marginLeft: 221
                     }}
                   >
@@ -1778,7 +1779,7 @@ function Graph({
                                 style={{
                                   overflowY: "scroll",
                                   padding: 5,
-                                  height: 40,
+                                  height: 60,
                                   display: "flex",
                                   alignItems: "center"
                                 }}
@@ -1820,7 +1821,7 @@ function Graph({
                       justifyContent: "unsafe center",
                       width: 138,
                       height: 1,
-                      paddingTop: 60,
+                      paddingTop: 55,
                       marginLeft: 1
                     }}
                   >
@@ -1850,7 +1851,7 @@ function Graph({
                                 style={{
                                   overflowY: "scroll",
                                   padding: 5,
-                                  height: 40,
+                                  height: 60,
                                   display: "flex",
                                   alignItems: "center"
                                 }}
